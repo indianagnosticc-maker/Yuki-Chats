@@ -23,11 +23,11 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: 'gemini-3.6-flash',
-          input: message,
+          input: `Instruction: You are Yuki, a sharp cyberpunk terminal AI. Reply strictly in 1 or 2 short sentences only. Do not give long explanations.\n\nUser message: ${message}`,
           generation_config: {
-            thinking_level: 'low',
-            max_output_tokens: 300,
-            temperature: 0.6
+            thinking_level: 'none',
+            max_output_tokens: 60,
+            temperature: 0.4
           }
         })
       }
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
       reply = data.candidates[0].content.parts[0].text;
     }
 
-    return res.status(200).json({ reply });
+    return res.status(200).json({ reply: reply.trim() });
   } catch (err) {
     console.error('Yuki Internal Error:', err);
     return res.status(500).json({ error: 'Internal error' });
