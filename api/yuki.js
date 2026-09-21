@@ -10,10 +10,7 @@ export default async function handler(req, res) {
   if (!message) return res.status(400).json({ error: 'Message required' });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('GEMINI_API_KEY missing');
-    return res.status(500).json({ error: 'API key not configured' });
-  }
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
   try {
     const response = await fetch(
@@ -28,7 +25,9 @@ export default async function handler(req, res) {
           model: 'gemini-3.6-flash',
           input: message,
           generation_config: {
-            thinking_level: 'low'
+            thinking_level: 'low',
+            max_output_tokens: 300,
+            temperature: 0.6
           }
         })
       }
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Gemini API Error:', response.status, errText);
-      return res.status(500).json({ error: 'AI service error', details: errText });
+      return res.status(500).json({ error: 'AI service error' });
     }
 
     const data = await response.json();
@@ -57,6 +56,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply });
   } catch (err) {
     console.error('Yuki Internal Error:', err);
-    return res.status(500).json({ error: 'Internal error', details: err.message });
+    return res.status(500).json({ error: 'Internal error' });
   }
 }
