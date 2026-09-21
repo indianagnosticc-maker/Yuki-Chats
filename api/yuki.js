@@ -22,27 +22,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const contents = [];
-    if (Array.isArray(history)) {
-      for (const h of history.slice(-10)) {
-        contents.push({
-          role: h.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: h.content }]
-        });
-      }
-    }
-    contents.push({ role: 'user', parts: [{ text: message }] });
-
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      'https://generativelanguage.googleapis.com/v1beta/interactions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
         body: JSON.stringify({
-          contents,
-          systemInstruction: {
-            parts: [{ text: "You are YUKI, a cyberpunk AI companion in a neural chat terminal. Reply in short, friendly, helpful messages. Match the user's language (Hindi/Hinglish/English)." }]
-          }
+          model: 'gemini-3.8-flash',
+          input: message,
+          generation_config: { thinking_level: 'low' }
         })
       }
     );
@@ -54,7 +45,19 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "…";
+    
+    // Interactions API response format
+    let reply = '…';
+    if (data.model_output && data.model_output.text) {
+      reply = data.model_output.text;
+    } else if (data.output && typeof data.output === 'string') {
+      reply = data.output;
+    } else if (Array.isArray(data)) {
+      const textPart = data.find(x => x.model_output || x.type === 'text');
+      if (textPart?.model_output?.text) reply = textPart.model_output.text;
+      else if (textPart?.text) reply = textPart.text;
+    }
+    
     return res.status(200).json({ reply });
   } catch (err) {
     console.error('Yuki API error:', err);
