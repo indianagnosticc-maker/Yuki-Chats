@@ -14,19 +14,20 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/interactions',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gemini-3.6-flash',
-          input: `Instruction: You are Yuki, a sharp cyberpunk terminal AI. Reply strictly in 1 or 2 short sentences only. Do not give long explanations.\n\nUser message: ${message}`,
-          generation_config: {
-            thinking_level: 'none',
-            max_output_tokens: 60,
+          contents: [{
+            parts: [{
+              text: `You are Yuki, a sharp cyberpunk terminal AI. Reply strictly in 1 or 2 short sentences. Do not give long explanations.\n\nUser: ${message}`
+            }]
+          }],
+          generationConfig: {
+            maxOutputTokens: 60,
             temperature: 0.4
           }
         })
@@ -36,26 +37,19 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Gemini API Error:', response.status, errText);
-      return res.status(500).json({ error: 'AI service error' });
+      return res.status(500).json({ error: 'Neural link unstable. Retry transmission.' });
     }
 
     const data = await response.json();
     
     let reply = '…';
-    if (Array.isArray(data.steps)) {
-      const outputStep = data.steps.find(s => s.type === 'model_output');
-      if (outputStep?.content?.[0]?.text) {
-        reply = outputStep.content[0].text;
-      }
-    } else if (data.model_output?.text) {
-      reply = data.model_output.text;
-    } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
       reply = data.candidates[0].content.parts[0].text;
     }
 
     return res.status(200).json({ reply: reply.trim() });
   } catch (err) {
     console.error('Yuki Internal Error:', err);
-    return res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ error: 'Neural link unstable. Retry transmission.' });
   }
 }
