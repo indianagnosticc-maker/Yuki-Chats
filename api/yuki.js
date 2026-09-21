@@ -3,24 +3,14 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { message } = req.body || {};
-  if (!message) {
-    return res.status(400).json({ error: 'Message required' });
-  }
+  if (!message) return res.status(400).json({ error: 'Message required' });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('API key not configured in environment variables');
-    return res.status(500).json({ error: 'API key not configured' });
-  }
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
   try {
     const response = await fetch(
@@ -33,7 +23,12 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: 'gemini-3.6-flash',
-          input: message
+          input: message,
+          generation_config: {
+            thinking_config: {
+              thinking_budget: 0
+            }
+          }
         })
       }
     );
@@ -46,7 +41,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // Interactions API (steps -> model_output -> content[0].text) parsing
     let reply = '…';
     if (Array.isArray(data.steps)) {
       const outputStep = data.steps.find(s => s.type === 'model_output');
