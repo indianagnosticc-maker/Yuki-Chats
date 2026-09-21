@@ -46,22 +46,19 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // Interactions API response structure parsing
+    // Interactions API (steps -> model_output -> content[0].text) parsing
     let reply = '…';
-    if (data.model_output && data.model_output.text) {
+    if (Array.isArray(data.steps)) {
+      const outputStep = data.steps.find(s => s.type === 'model_output');
+      if (outputStep?.content?.[0]?.text) {
+        reply = outputStep.content[0].text;
+      }
+    } else if (data.model_output?.text) {
       reply = data.model_output.text;
-    } else if (data.output && typeof data.output === 'string') {
-      reply = data.output;
     } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
       reply = data.candidates[0].content.parts[0].text;
-    } else if (Array.isArray(data)) {
-      const textPart = data.find(x => x.model_output || x.type === 'text');
-      if (textPart?.model_output?.text) reply = textPart.model_output.text;
-      else if (textPart?.text) reply = textPart.text;
-    } else {
-      reply = typeof data === 'string' ? data : JSON.stringify(data);
     }
-    
+
     return res.status(200).json({ reply });
   } catch (err) {
     console.error('Yuki API error:', err);
