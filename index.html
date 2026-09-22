@@ -2569,14 +2569,2284 @@ function checkForNewMessagePopup() {
   }
 }
 let bannerTimer = null;
+function <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content" name="viewport"/>
+<title>YUKI CHATS</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0f;
+    --surface-elevated: #12121a;
+    --surface-hover: rgba(77, 171, 255, 0.05);
+    --border: #1a1a22;
+    --border-subtle: #14141c;
+    --primary: #4dabff;
+    --primary-dark: #0088ff;
+    --primary-glow: rgba(77, 171, 255, 0.35);
+    --yuki-cyan: #22d3ee;
+    --danger: #ff4d6d;
+    --danger-bg: rgba(255, 77, 109, 0.08);
+    --txt-main: #ffffff;
+    --txt-muted: #a0a8b8;
+    --txt-subtle: #6b7280;
+    --success: #22c55e;
+    --bubble-mine: #4dabff;
+    --bubble-peer: #1a1a1f;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --safe-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    --safe-top: max(12px, env(safe-area-inset-top, 12px));
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--txt-main);
+    font-family: var(--font-sans);
+    overflow: hidden;
+    position: fixed; inset: 0;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Matrix background */
+  #matrix-rain {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: 1; pointer-events: none; opacity: 0.12;
+    transition: opacity 0.3s ease;
+  }
+  #matrix-rain.disabled { opacity: 0; }
+
+  /* App Root Layout */
+  .app-frame {
+    position: relative; z-index: 2;
+    width: 100%; height: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+    border-left: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  @media (max-width: 600px) {
+    .app-frame { border-left: none; border-right: none; }
+  }
+
+  /* Screen Switcher Container */
+  .screens-slider {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen-view {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+    will-change: transform, opacity;
+  }
+
+  .screen-view.hidden-left {
+    transform: translateX(-24%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen-view.hidden-right {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen-view.active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Top App Bar */
+  .top-bar {
+    height: 56px;
+    padding-top: max(6px, env(safe-area-inset-top, 6px));
+    padding-left: 18px; padding-right: 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10, 10, 15, 0.88);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .app-brand {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--primary);
+    text-transform: uppercase;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--txt-muted);
+    cursor: pointer;
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+    outline: none;
+  }
+  .icon-btn:hover {
+    color: var(--txt-main);
+    background: rgba(255,255,255,0.06);
+  }
+  .icon-btn:active {
+    transform: scale(0.94);
+  }
+  .icon-btn svg {
+    width: 20px; height: 20px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  /* Search Bar in Home */
+  .search-wrap {
+    padding: 12px 18px 8px;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .search-inner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 9px 14px;
+    transition: all 0.2s ease;
+  }
+  .search-inner:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(77, 171, 255, 0.15);
+  }
+  .search-inner svg {
+    width: 16px; height: 16px;
+    stroke: var(--txt-subtle);
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .search-input {
+    flex: 1; min-width: 0;
+    background: transparent;
+    border: none; outline: none;
+    color: var(--txt-main);
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+  .search-input::placeholder {
+    color: var(--txt-subtle);
+  }
+
+  /* Chat List Scroll View */
+  .chat-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    list-style: none;
+    padding-bottom: 74px; /* Space for bottom nav */
+  }
+
+  .chat-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: background 0.16s ease;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .chat-item:hover {
+    background: var(--surface-hover);
+  }
+  .chat-item:active {
+    background: rgba(77, 171, 255, 0.08);
+  }
+  .chat-item.active {
+    border-left: 3px solid var(--primary);
+    background: rgba(77, 171, 255, 0.05);
+  }
+
+  .chat-item-main {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    gap: 4px;
+  }
+  .chat-item-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px;
+  }
+  .chat-item-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--txt-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chat-item-name.yuki-name {
+    color: var(--yuki-cyan);
+    font-weight: 600;
+  }
+  .chat-item-time {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--txt-subtle);
+    flex-shrink: 0;
+  }
+  .chat-item-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  .chat-item-preview {
+    font-size: 13.5px;
+    color: var(--txt-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.35;
+  }
+  .unread-badge {
+    background: var(--primary);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    border-radius: 10px;
+    padding: 1px 7px;
+    flex-shrink: 0;
+  }
+  .chat-item-menu {
+    margin-left: 6px;
+    color: var(--txt-subtle);
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+    border-radius: 4px;
+  }
+  .chat-item-menu:hover { color: var(--danger); }
+
+  .empty-state {
+    padding: 70px 24px;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .empty-state-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--txt-muted);
+  }
+  .empty-state-sub {
+    font-size: 13px;
+    color: var(--txt-subtle);
+  }
+
+  /* Floating Action Button (+) */
+  .fab-query {
+    position: absolute;
+    right: 20px;
+    bottom: 82px;
+    width: 52px; height: 52px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(77, 171, 255, 0.35);
+    z-index: 15;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+    outline: none;
+  }
+  .fab-query:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(77, 171, 255, 0.45);
+  }
+  .fab-query:active {
+    transform: scale(0.93);
+  }
+  .fab-query svg {
+    width: 24px; height: 24px;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    fill: none;
+  }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(10, 10, 15, 0.94);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
+    z-index: 20;
+  }
+  .nav-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+    color: var(--txt-subtle);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.18s ease;
+    outline: none;
+    height: 100%;
+  }
+  .nav-tab svg {
+    width: 20px; height: 20px;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    fill: none;
+    transition: transform 0.18s ease;
+  }
+  .nav-tab:hover {
+    color: var(--txt-muted);
+  }
+  .nav-tab.active {
+    color: var(--primary);
+  }
+  .nav-tab.active svg {
+    transform: translateY(-1px);
+    stroke-width: 2.2;
+  }
+
+  /* Chat Conversation Screen */
+  .chat-header {
+    height: 56px;
+    padding-top: max(4px, env(safe-area-inset-top, 4px));
+    padding-left: 10px; padding-right: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10, 10, 15, 0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .chat-header-center {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 8px;
+  }
+  .chat-header-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--txt-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+  .chat-header-status {
+    font-size: 11.5px;
+    font-family: var(--font-mono);
+    color: var(--txt-subtle);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+
+  /* Chat Stream */
+  .chat-stream {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 16px 12px;
+    display: flex; flex-direction: column;
+    gap: 12px;
+  }
+
+  .legal-note {
+    background: rgba(255, 183, 3, 0.04);
+    border: 1px dashed rgba(255, 183, 3, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #e2c079;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .legal-note-head {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #ffb703;
+    margin-bottom: 4px;
+  }
+
+  .msg-row {
+    display: flex; flex-direction: column;
+    max-width: 78%; width: fit-content;
+    animation: msgFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .msg-row.me {
+    align-self: flex-end;
+  }
+  .msg-row.peer {
+    align-self: flex-start;
+  }
+
+  @keyframes msgFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    font-size: 14.5px;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .msg-row.me .msg-bubble {
+    background: var(--bubble-mine);
+    color: #000000;
+    font-weight: 400;
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 2px 12px rgba(77, 171, 255, 0.25);
+  }
+  .msg-row.peer .msg-bubble {
+    background: var(--bubble-peer);
+    color: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 16px 4px;
+  }
+
+  .msg-meta {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--txt-subtle);
+    margin-top: 3px;
+    padding: 0 4px;
+  }
+  .msg-row.me .msg-meta {
+    justify-content: flex-end;
+  }
+  .msg-row.peer .msg-meta {
+    justify-content: flex-start;
+  }
+
+  .receipt-mark {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--txt-subtle);
+    letter-spacing: 0.5px;
+  }
+  .receipt-mark.seen {
+    color: var(--primary);
+    text-shadow: 0 0 6px var(--primary-glow);
+    animation: seenPulse 0.3s ease-out;
+  }
+  @keyframes seenPulse {
+    0% { transform: scale(0.85); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Code snippet block inside bubble */
+  .code-container {
+    margin: 6px 0 2px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: #06080e;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .code-head {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.04);
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    color: var(--yuki-cyan);
+    font-size: 10px;
+  }
+  .copy-code-btn {
+    background: transparent; border: 1px solid rgba(34, 211, 238, 0.4);
+    border-radius: 4px; color: var(--yuki-cyan);
+    font-size: 9.5px; padding: 1px 6px; cursor: pointer;
+  }
+  pre.code-body {
+    padding: 8px 10px;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    color: #bbf7d0;
+    line-height: 1.4;
+  }
+
+  /* Composer */
+  .composer-bar {
+    background: rgba(10, 10, 15, 0.94);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-subtle);
+    padding: 8px 14px max(10px, env(safe-area-inset-bottom, 10px));
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .composer-status {
+    display: flex; justify-content: flex-end;
+    font-size: 10px; font-family: var(--font-mono);
+    color: var(--txt-subtle); margin-bottom: 4px;
+  }
+  .composer-form {
+    display: flex; gap: 8px; align-items: flex-end;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 4px 6px 4px 14px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .composer-form:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(77, 171, 255, 0.12);
+  }
+  .composer-prompt-symbol {
+    color: var(--primary);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding-bottom: 7px;
+    user-select: none;
+  }
+  .composer-textarea {
+    flex: 1; min-width: 0;
+    background: transparent;
+    border: none; outline: none;
+    color: var(--txt-main);
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    resize: none;
+    max-height: 110px;
+    line-height: 1.4;
+    padding: 6px 0;
+  }
+  .composer-textarea::placeholder {
+    color: var(--txt-subtle);
+  }
+  .send-circle-btn {
+    width: 36px; height: 36px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    color: #ffffff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.14s ease, opacity 0.14s ease;
+    margin-bottom: 1px;
+  }
+  .send-circle-btn:disabled {
+    opacity: 0.35; cursor: not-allowed;
+  }
+  .send-circle-btn:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+  .send-circle-btn svg {
+    width: 17px; height: 17px;
+    stroke: #ffffff; stroke-width: 2.2; fill: none;
+    margin-left: 2px;
+  }
+
+  /* Settings Drawer */
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.22s ease;
+    display: flex; justify-content: flex-end;
+  }
+  .drawer-overlay.open {
+    opacity: 1; pointer-events: auto;
+  }
+  .drawer-panel {
+    width: 86%; max-width: 360px;
+    height: 100%;
+    background: #08080d;
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -10px 0 32px rgba(0,0,0,0.7);
+  }
+  .drawer-overlay.open .drawer-panel {
+    transform: translateX(0);
+  }
+
+  .drawer-head {
+    padding: 18px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--primary);
+  }
+
+  .drawer-content {
+    flex: 1; overflow-y: auto;
+    padding: 16px 18px;
+    display: flex; flex-direction: column;
+    gap: 20px;
+  }
+
+  .user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .user-card-info {
+    display: flex; flex-direction: column; gap: 3px; min-width: 0;
+  }
+  .user-card-name {
+    font-size: 15px; font-weight: 600; color: var(--txt-main);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .user-card-handle {
+    font-size: 12px; font-family: var(--font-mono); color: var(--txt-muted);
+  }
+  .btn-pill-copy {
+    background: rgba(77, 171, 255, 0.1);
+    border: 1px solid rgba(77, 171, 255, 0.3);
+    color: var(--primary);
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-pill-copy:hover {
+    background: var(--primary);
+    color: #000;
+  }
+
+  .settings-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .settings-row {
+    padding: 13px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13.5px;
+    color: var(--txt-main);
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s ease;
+  }
+  .settings-row:last-child {
+    border-bottom: none;
+  }
+  .settings-row-label {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 400;
+  }
+  .settings-row-status {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--txt-muted);
+  }
+  .settings-row.link {
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--txt-main);
+  }
+  .settings-row.link:hover {
+    background: var(--surface-hover);
+  }
+  .settings-row.danger {
+    cursor: pointer;
+    color: var(--danger);
+  }
+  .settings-row.danger:hover {
+    background: var(--danger-bg);
+  }
+
+  /* Switch Toggle */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 42px; height: 24px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background-color: #24242d;
+    transition: .2s;
+    border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute; content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: #ffffff;
+    transition: .2s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--primary);
+  }
+  input:checked + .slider:before {
+    transform: translateX(18px);
+    background-color: #000000;
+  }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(10px);
+    z-index: 1100;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal-box {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%; max-width: 420px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+    animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes modalPop {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .modal-head {
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--primary);
+  }
+  .modal-body {
+    padding: 18px;
+  }
+  .modal-foot {
+    padding: 12px 18px 16px;
+    display: flex; gap: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-modal {
+    flex: 1;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+  .btn-modal.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
+  }
+  .btn-modal.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--txt-muted);
+  }
+  .btn-modal.danger {
+    background: var(--danger);
+    color: #ffffff;
+  }
+
+  /* Auth Screen (Overlay) */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 2000;
+    background: #000000;
+    display: none; align-items: center; justify-content: center;
+    padding: 24px 20px;
+  }
+  #login-screen.show { display: flex; }
+  .login-card {
+    width: 100%; max-width: 370px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px 24px;
+    display: flex; flex-direction: column;
+    text-align: center;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.8);
+  }
+  .login-title {
+    font-family: var(--font-mono);
+    font-size: 32px; font-weight: 700;
+    letter-spacing: 8px;
+    color: var(--primary);
+    text-shadow: 0 0 20px var(--primary-glow);
+    margin-bottom: 4px;
+  }
+  .login-sub {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--txt-subtle);
+    margin-bottom: 26px;
+    letter-spacing: 1px;
+  }
+  .login-fields {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 18px;
+  }
+  .login-field {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--txt-main);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .login-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(77, 171, 255, 0.15);
+  }
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(77, 171, 255, 0.35);
+    transition: transform 0.15s ease;
+  }
+  .login-btn:active { transform: scale(0.97); }
+  .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-toggle {
+    margin-top: 18px;
+    background: transparent; border: none;
+    color: var(--txt-subtle);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .login-toggle span {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .login-error {
+    min-height: 18px; margin-top: 12px;
+    color: var(--danger); font-size: 12px; font-family: var(--font-mono);
+  }
+  .login-info {
+    min-height: 0; margin-top: 6px;
+    color: var(--primary); font-size: 12px;
+  }
+
+  /* Boot Overlay */
+  #boot-cover {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; transition: opacity 0.22s ease;
+  }
+  #boot-cover.gone { opacity: 0; pointer-events: none; }
+  .boot-logo {
+    font-family: var(--font-mono);
+    font-size: 16px; letter-spacing: 3px;
+    color: var(--primary);
+  }
+  .boot-dots { display: flex; gap: 6px; }
+  .boot-dots span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary); opacity: 0.3;
+    animation: bootPulse 1.2s infinite;
+  }
+  .boot-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .boot-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bootPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 8px var(--primary); }
+  }
+
+  /* Toast notification */
+  .toast-banner {
+    position: fixed; bottom: 84px; left: 50%;
+    transform: translateX(-50%) translateY(30px);
+    background: var(--surface-elevated);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    z-index: 2500;
+    opacity: 0; pointer-events: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+  .toast-banner.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+
+  /* Top Banner for new incoming message */
+  .incoming-banner {
+    position: absolute; top: 0; left: 0; right: 0;
+    background: rgba(18, 18, 26, 0.96);
+    border-bottom: 1px solid var(--primary);
+    backdrop-filter: blur(14px);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    transform: translateY(-100%);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    z-index: 50;
+  }
+  .incoming-banner.visible { transform: translateY(0); }
+  .incoming-banner-left {
+    display: flex; flex-direction: column; min-width: 0;
+  }
+  .incoming-banner-sender {
+    font-size: 12px; font-weight: 700; color: var(--primary);
+  }
+  .incoming-banner-snippet {
+    font-size: 13px; color: var(--txt-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-rain"></canvas>
+
+<div class="app-frame">
+  <!-- Incoming Message Slide Banner -->
+  <div class="incoming-banner" id="incoming-banner">
+    <div class="incoming-banner-left">
+      <div class="incoming-banner-sender" id="banner-sender">@operative</div>
+      <div class="incoming-banner-snippet" id="banner-preview">new message</div>
+    </div>
+  </div>
+
+  <!-- Boot Cover -->
+  <div id="boot-cover">
+    <div class="boot-logo">YUKI // CHATS</div>
+    <div class="boot-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- Screen Slider Viewport -->
+  <div class="screens-slider">
+    <!-- VIEW 1: HOME SCREEN (Chat List) -->
+    <div class="screen-view active" id="view-home">
+      <header class="top-bar">
+        <button class="icon-btn" id="btn-hamburger" title="Settings">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <div class="app-brand">YUKI CHATS</div>
+        <button class="icon-btn" id="btn-top-profile" title="My Profile">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </button>
+      </header>
+
+      <div class="search-wrap">
+        <div class="search-inner">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="search-input" id="home-search-input" placeholder="Search chats..." autocomplete="off"/>
+        </div>
+      </div>
+
+      <ul class="chat-list" id="home-chat-list">
+        <!-- Yuki pinned entry + peer chats populated by JS -->
+      </ul>
+
+      <!-- Floating Action Button (+) -->
+      <button class="fab-query" id="btn-fab-query" title="Start new chat">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+
+      <!-- Bottom Navigation Bar -->
+      <nav class="bottom-nav">
+        <button class="nav-tab active" id="tab-nav-home">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>HOME</span>
+        </button>
+        <button class="nav-tab" id="tab-nav-query">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>QUERY</span>
+        </button>
+        <button class="nav-tab" id="tab-nav-settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>SETTINGS</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- VIEW 2: CONVERSATION SCREEN -->
+    <div class="screen-view hidden-right" id="view-conversation">
+      <header class="chat-header">
+        <button class="icon-btn" id="btn-back-home" title="Back to chats">
+          <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <div class="chat-header-center">
+          <div class="chat-header-name" id="chat-peer-name">TERMINAL READY</div>
+          <div class="chat-header-status" id="chat-peer-status">online</div>
+        </div>
+        <button class="icon-btn" id="btn-chat-menu" title="Actions">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+        </button>
+      </header>
+
+      <div class="chat-stream" id="chat-stream">
+        <div class="legal-note">
+          <div class="legal-note-head">OPERATIONAL SECURITY NOTICE</div>
+          Private, encrypted telemetry channel. Do not transmit credentials or sensitive materials. All records are processed via security shards.
+        </div>
+      </div>
+
+      <div class="composer-bar" id="composer-bar">
+        <div class="composer-status" id="word-counter-display">0 / 5,000 words</div>
+        <form class="composer-form" id="chat-form">
+          <span class="composer-prompt-symbol">❯</span>
+          <textarea class="composer-textarea" id="chat-textarea" placeholder="Message..." rows="1" autocomplete="off" spellcheck="false"></textarea>
+          <button class="send-circle-btn" id="btn-send" type="submit" title="Send message">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Drawer (Right slide) -->
+<div class="drawer-overlay" id="settings-drawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <div class="drawer-title">SETTINGS</div>
+      <button class="icon-btn" id="btn-close-drawer">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="drawer-content">
+      <!-- User Profile Card -->
+      <div class="user-card">
+        <div class="user-card-info">
+          <div class="user-card-name" id="drawer-user-name">OPERATIVE</div>
+          <div class="user-card-handle" id="drawer-user-handle">@operative</div>
+        </div>
+        <button class="btn-pill-copy" id="btn-copy-handle">COPY ID</button>
+      </div>
+
+      <!-- Settings List -->
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Terminal Status</span>
+          <span class="settings-row-status" style="color:var(--primary); font-weight:700;">ONLINE</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">SFX Audio Feedback</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sfx" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Matrix Rain Background</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-matrix" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Terminal Stats</span>
+          <span class="settings-row-status" id="settings-peer-count">SYS 1</span>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <a href="https://yuki-terminal.vercel.app" class="settings-row link" target="_blank" rel="noopener">
+          <span class="settings-row-label">Back to OSINT Kernel</span>
+          <span class="settings-row-status">↗</span>
+        </a>
+        <div class="settings-row danger" id="btn-settings-logout">
+          <span class="settings-row-label">Terminate Session (Logout)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search / Query Modal -->
+<div class="modal-backdrop" id="search-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">FIND USER</span>
+      <button class="icon-btn" id="btn-close-search-modal">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="search-inner" style="margin-bottom:12px;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="search-input" id="modal-search-input" placeholder="Search by username..." autocomplete="off"/>
+      </div>
+      <div id="modal-search-results">
+        <div style="text-align:center; color:var(--txt-subtle); padding:24px 0; font-size:13px;">Search by username to connect</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Logout / Delete Modal -->
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title" id="confirm-modal-title">CONFIRM ACTION</span>
+      <button class="icon-btn" id="btn-close-confirm-modal">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:14.5px; margin-bottom:6px; color:#ffffff;" id="confirm-modal-text">Are you sure?</div>
+      <div style="font-size:12px; color:var(--txt-subtle);" id="confirm-modal-sub">This action cannot be undone.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal secondary" id="btn-confirm-cancel">Cancel</button>
+      <button class="btn-modal danger" id="btn-confirm-ok">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Banner -->
+<div class="toast-banner" id="toast-banner">COPIED</div>
+
+<!-- Auth Modal Screen -->
+<div id="login-screen" class="show">
+  <div class="login-card">
+    <div class="login-title">YUKI</div>
+    <div class="login-sub">// neural terminal access</div>
+    <div class="login-fields">
+      <input class="login-field" id="auth-email" type="email" placeholder="Email address" autocomplete="email"/>
+      <input class="login-field" id="auth-password" type="password" placeholder="Security key" autocomplete="current-password"/>
+    </div>
+    <button class="login-btn" id="btn-auth-submit">SIGN IN</button>
+    <div class="login-error" id="auth-error"></div>
+    <div class="login-info" id="auth-info"></div>
+    <button class="login-toggle" id="btn-toggle-auth">Don't have an account? <span>Sign up</span></button>
+    <button class="login-toggle" id="btn-resend-verify" style="display:none;">Didn't get email? <span>Resend verification</span></button>
+  </div>
+</div>
+
+<script>
+/* Audio Feedback */
+let soundEnabled = true;
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playSfx(type) {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  try {
+    if (type === 'send') {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(1100, t);
+      osc.frequency.exponentialRampToValueAtTime(550, t + 0.04);
+      g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+      osc.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t + 0.05);
+    } else if (type === 'receive') {
+      [800, 1200].forEach((freq, idx) => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, t + idx * 0.05);
+        g.gain.setValueAtTime(0.08, t + idx * 0.05); g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.05 + 0.1);
+        osc.connect(g); g.connect(ctx.destination); osc.start(t + idx * 0.05); osc.stop(t + idx * 0.05 + 0.11);
+      });
+    } else if (type === 'click') {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(1300, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.025);
+      g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+      osc.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t + 0.03);
+    }
+  } catch(e) {}
+}
+window.addEventListener('pointerdown', () => getAudioCtx(), { once: true });
+window.addEventListener('keydown', () => getAudioCtx(), { once: true });
+
+/* Subtle Matrix Rain Background */
+let rainActive = true;
+const canvas = document.getElementById('matrix-rain');
+const ctx2d = canvas.getContext('2d');
+const chars = "0123456789ABCDEF01アイウエオカキクケコサシスセソタツテ!@#$%^&*";
+const charArr = chars.split('');
+const fontSize = 13;
+let columns = 0, drops = [];
+function resizeRain() {
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  columns = Math.floor(canvas.width / fontSize); drops = [];
+  for (let i = 0; i < columns; i++) drops[i] = Math.floor(Math.random() * -30);
+}
+window.addEventListener('resize', resizeRain);
+resizeRain();
+let lastFrame = 0;
+function renderRain(time) {
+  requestAnimationFrame(renderRain);
+  if (!rainActive) return;
+  if (time - lastFrame < 33) return;
+  lastFrame = time;
+  ctx2d.fillStyle = 'rgba(0, 0, 0, 0.08)';
+  ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+  ctx2d.font = fontSize + 'px ui-monospace, monospace';
+  for (let i = 0; i < drops.length; i++) {
+    const text = charArr[Math.floor(Math.random() * charArr.length)];
+    const x = i * fontSize, y = drops[i] * fontSize;
+    ctx2d.fillStyle = Math.random() > 0.88 ? '#ffffff' : '#4dabff';
+    ctx2d.fillText(text, x, y);
+    if (y > canvas.height && Math.random() > 0.98) drops[i] = 0;
+    drops[i]++;
+  }
+}
+requestAnimationFrame(renderRain);
+
+/* Viewport keyboard handling */
+(function initKeyboardFix() {
+  if (!window.visualViewport) return;
+  const vv = window.visualViewport;
+  const composer = document.getElementById('composer-bar');
+  const stream = document.getElementById('chat-stream');
+  let baseHeight = window.innerHeight;
+  function applyKeyboardOffset() {
+    if (!composer || !vv) return;
+    const keyboardHeight = Math.max(0, baseHeight - vv.height);
+    const offsetTop = vv.offsetTop || 0;
+    if (keyboardHeight > 70) {
+      composer.style.transform = `translateY(-${keyboardHeight - offsetTop}px)`;
+      if (stream) stream.scrollTop = stream.scrollHeight;
+    } else {
+      composer.style.transform = 'translateY(0)';
+    }
+  }
+  vv.addEventListener('resize', applyKeyboardOffset);
+  vv.addEventListener('scroll', applyKeyboardOffset);
+  window.addEventListener('resize', () => { baseHeight = window.innerHeight; applyKeyboardOffset(); });
+})();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, setPersistence, browserLocalPersistence,
+  sendEmailVerification
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection,
+  query, where, orderBy, limit, onSnapshot, serverTimestamp, getDocs, increment
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZWHHSGkbdN5NLRdBKwecHHf7m2yu5cAk",
+  authDomain: "yuki-820b3.firebaseapp.com",
+  projectId: "yuki-820b3",
+  storageBucket: "yuki-820b3.firebasestorage.app",
+  messagingSenderId: "1055284096143",
+  appId: "1:1055284096143:web:f9463859371eb606db14fa"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+setPersistence(auth, browserLocalPersistence).catch(()=>{});
+
+const $ = (id) => document.getElementById(id);
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => (
+    {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]
+  ));
+}
+function showToast(msg) {
+  const t = $("toast-banner");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+const YUKI_BOT_UID = "__yuki_ai__";
+let yukiChatHistory = [];
+let currentUser = null;
+let currentProfile = null;
+let activePeer = null;
+let activeChatId = null;
+let isSignUpMode = false;
+let unsubMessages = null;
+let unsubPeerStatus = null;
+let unsubChatRoster = null;
+let typingBeaconTimer = null;
+let lastTypingTime = 0;
+let localChannels = [];
+let searchQuery = "";
+
+let renderedChatId = null;
+let renderedMsgIds = new Set();
+let renderedHasIntro = false;
+
+function formatTime(ts) {
+  if (!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "now";
+  if (s < 3600) return Math.floor(s/60) + "m";
+  if (s < 86400) return Math.floor(s/3600) + "h";
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+function formatClock(ts) {
+  if (!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+function computeChatId(a, b) { return [a, b].sort().join("__"); }
+
+function getDeleted(uid) {
+  try { return JSON.parse(localStorage.getItem("yuki_deleted_" + uid) || "[]"); } catch(e){ return []; }
+}
+function addDeleted(uid, o) {
+  const l = getDeleted(uid);
+  if (!l.includes(o)) { l.push(o); localStorage.setItem("yuki_deleted_" + uid, JSON.stringify(l)); }
+}
+function removeDeleted(uid, o) {
+  localStorage.setItem("yuki_deleted_" + uid, JSON.stringify(getDeleted(uid).filter(x => x !== o)));
+}
+function isDeleted(uid, o) { return getDeleted(uid).includes(o); }
+
+function hideBoot() {
+  const b = $("boot-cover");
+  if (!b) return;
+  b.classList.add("gone");
+  setTimeout(() => { if (b.parentNode) b.remove(); }, 300);
+}
+
+/* Screen Navigation */
+function navigateToScreen(screenId) {
+  const viewHome = $("view-home");
+  const viewConvo = $("view-conversation");
+  if (screenId === "conversation") {
+    viewHome.classList.add("hidden-left");
+    viewHome.classList.remove("active");
+    viewConvo.classList.remove("hidden-right");
+    viewConvo.classList.add("active");
+  } else {
+    viewConvo.classList.add("hidden-right");
+    viewConvo.classList.remove("active");
+    viewHome.classList.remove("hidden-left");
+    viewHome.classList.add("active");
+  }
+}
+$("btn-back-home").addEventListener("click", () => {
+  playSfx('click');
+  navigateToScreen("home");
+});
+
+/* Bottom Navigation */
+$("tab-nav-home").addEventListener("click", () => {
+  setActiveNavTab("home");
+  navigateToScreen("home");
+  playSfx('click');
+});
+$("tab-nav-query").addEventListener("click", () => {
+  setActiveNavTab("query");
+  openSearchModal();
+  playSfx('click');
+});
+$("tab-nav-settings").addEventListener("click", () => {
+  setActiveNavTab("settings");
+  openSettingsDrawer();
+  playSfx('click');
+});
+function setActiveNavTab(tab) {
+  $("tab-nav-home").classList.toggle("active", tab === "home");
+  $("tab-nav-query").classList.toggle("active", tab === "query");
+  $("tab-nav-settings").classList.toggle("active", tab === "settings");
+}
+
+/* FAB (+) */
+$("btn-fab-query").addEventListener("click", () => {
+  playSfx('click');
+  openSearchModal();
+});
+
+/* Settings Drawer */
+function openSettingsDrawer() {
+  $("settings-drawer").classList.add("open");
+}
+function closeSettingsDrawer() {
+  $("settings-drawer").classList.remove("open");
+  setActiveNavTab("home");
+}
+$("btn-hamburger").addEventListener("click", () => { playSfx('click'); openSettingsDrawer(); });
+$("btn-top-profile").addEventListener("click", () => { playSfx('click'); openSettingsDrawer(); });
+$("btn-close-drawer").addEventListener("click", () => { playSfx('click'); closeSettingsDrawer(); });
+$("settings-drawer").addEventListener("click", (e) => {
+  if (e.target === $("settings-drawer")) closeSettingsDrawer();
+});
+
+/* Copy Handle */
+$("btn-copy-handle").addEventListener("click", function() {
+  if (!currentProfile) return;
+  navigator.clipboard.writeText(currentProfile.username).catch(()=>{});
+  showToast("ID COPIED");
+  playSfx('click');
+});
+
+/* SFX & Matrix toggles */
+$("toggle-sfx").addEventListener("change", (e) => {
+  soundEnabled = e.target.checked;
+  if (soundEnabled) playSfx('click');
+});
+$("toggle-matrix").addEventListener("change", (e) => {
+  rainActive = e.target.checked;
+  canvas.classList.toggle("disabled", !rainActive);
+  playSfx('click');
+});
+
+/* Confirm Modal Logic */
+function openConfirmModal(opts, cb) {
+  const modal = $("confirm-modal");
+  $("confirm-modal-title").textContent = opts.title || "CONFIRM";
+  $("confirm-modal-text").textContent = opts.text || "Are you sure?";
+  $("confirm-modal-sub").textContent = opts.sub || "This action cannot be undone.";
+  $("btn-confirm-ok").textContent = opts.okText || "CONFIRM";
+  modal.classList.add("open");
+  modal._callback = cb;
+}
+function closeConfirmModal(result) {
+  const modal = $("confirm-modal");
+  modal.classList.remove("open");
+  const cb = modal._callback;
+  modal._callback = null;
+  if (typeof cb === "function") cb(result);
+}
+$("btn-confirm-cancel").addEventListener("click", () => closeConfirmModal(false));
+$("btn-confirm-ok").addEventListener("click", () => closeConfirmModal(true));
+$("btn-close-confirm-modal").addEventListener("click", () => closeConfirmModal(false));
+$("confirm-modal").addEventListener("click", (e) => {
+  if (e.target === $("confirm-modal")) closeConfirmModal(false);
+});
+
+/* Logout Action */
+$("btn-settings-logout").addEventListener("click", () => {
+  if (!currentUser) return;
+  openConfirmModal({
+    title: "TERMINATE SESSION",
+    text: "Are you sure you want to log out from this terminal?",
+    sub: "All active neural connections will be severed.",
+    okText: "LOGOUT"
+  }, async (ok) => {
+    if (!ok) return;
+    playSfx('click');
+    closeSettingsDrawer();
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), { lastSeen: serverTimestamp() });
+    } catch(e){}
+    await signOut(auth);
+  });
+  playSfx('click');
+});
+
+/* AUTH HANDLERS */
+$("btn-toggle-auth").addEventListener("click", () => {
+  isSignUpMode = !isSignUpMode;
+  $("auth-error").textContent = "";
+  $("auth-info").textContent = "";
+  $("btn-resend-verify").style.display = "none";
+  if (isSignUpMode) {
+    $("btn-auth-submit").textContent = "REGISTER IDENTITY";
+    $("btn-toggle-auth").innerHTML = "Already registered? <span>Sign in</span>";
+  } else {
+    $("btn-auth-submit").textContent = "SIGN IN";
+    $("btn-toggle-auth").innerHTML = "Don't have an account? <span>Sign up</span>";
+  }
+});
+$("btn-auth-submit").addEventListener("click", handleAuthSubmit);
+$("auth-password").addEventListener("keydown", e => { if (e.key === "Enter") handleAuthSubmit(); });
+
+async function handleAuthSubmit() {
+  const email = $("auth-email").value.trim().toLowerCase();
+  const password = $("auth-password").value;
+  const errEl = $("auth-error");
+  const infoEl = $("auth-info");
+  errEl.textContent = "";
+  infoEl.textContent = "";
+  $("btn-resend-verify").style.display = "none";
+  if (!email || !password) { errEl.textContent = "invalid email or password"; return; }
+  if (password.length < 6) { errEl.textContent = "key must be at least 6 characters"; return; }
+  const btn = $("btn-auth-submit");
+  btn.disabled = true;
+  try {
+    if (isSignUpMode) {
+      const handleCandidate = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 15) || "operator";
+      let handle = handleCandidate.toLowerCase();
+      for (let i = 0; i < 5; i++) {
+        const hDoc = await getDoc(doc(db, "usernames", handle));
+        if (!hDoc.exists()) break;
+        handle = handleCandidate.toLowerCase() + "_" + Math.floor(Math.random() * 99);
+      }
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const np = {
+        username: handle, display: handle.toUpperCase() + "_UNIT",
+        email: email, createdAt: serverTimestamp(), lastSeen: serverTimestamp(),
+        emailVerified: false
+      };
+      await setDoc(doc(db, "users", cred.user.uid), np);
+      await setDoc(doc(db, "usernames", handle), { uid: cred.user.uid });
+
+      try {
+        await sendEmailVerification(cred.user);
+      } catch(verErr){}
+      infoEl.textContent = "Verification email sent. Check your inbox.";
+      await signOut(auth);
+      return;
+    } else {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      if (!cred.user.emailVerified) {
+        errEl.textContent = "Please verify your email first.";
+        $("btn-resend-verify").style.display = "block";
+        await signOut(auth);
+        return;
+      }
+    }
+  } catch (err) {
+    if (err.code === "auth/email-already-in-use") errEl.textContent = "This email is already registered.";
+    else if (err.code === "auth/invalid-email") errEl.textContent = "Invalid email address.";
+    else if (err.code === "auth/weak-password") errEl.textContent = "Password too weak. 6+ chars.";
+    else errEl.textContent = "Invalid email or credentials.";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("btn-resend-verify").addEventListener("click", async () => {
+  const email = $("auth-email").value.trim().toLowerCase();
+  const password = $("auth-password").value;
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    if (!cred.user.emailVerified) {
+      await sendEmailVerification(cred.user);
+      $("auth-info").textContent = "Verification email resent.";
+    }
+    await signOut(auth);
+  } catch(e) {
+    $("auth-error").textContent = "Could not resend email.";
+  }
+});
+
+/* Auth Observer */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentUser = null; currentProfile = null;
+    $("login-screen").classList.add("show");
+    if (unsubMessages) { try { unsubMessages(); } catch(e){} unsubMessages = null; }
+    if (unsubPeerStatus) { try { unsubPeerStatus(); } catch(e){} unsubPeerStatus = null; }
+    if (unsubChatRoster) { try { unsubChatRoster(); } catch(e){} unsubChatRoster = null; }
+    hideBoot();
+    return;
+  }
+  if (!user.emailVerified) {
+    $("login-screen").classList.add("show");
+    $("auth-error").textContent = "Please verify your email first.";
+    $("btn-resend-verify").style.display = "block";
+    hideBoot();
+    return;
+  }
+  currentUser = user;
+  try {
+    const uDoc = await getDoc(doc(db, "users", user.uid));
+    if (uDoc.exists()) currentProfile = uDoc.data();
+    else {
+      const defaultHandle = (user.email ? user.email.split("@")[0] : "operator").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
+      currentProfile = {
+        username: defaultHandle, display: defaultHandle.toUpperCase() + "_UNIT",
+        email: user.email || "", createdAt: serverTimestamp(), lastSeen: serverTimestamp(),
+        emailVerified: true
+      };
+      await setDoc(doc(db, "users", user.uid), currentProfile, { merge: true });
+      await setDoc(doc(db, "usernames", defaultHandle), { uid: user.uid }, { merge: true });
+    }
+    $("drawer-user-name").textContent = currentProfile.display || currentProfile.username;
+    $("drawer-user-handle").textContent = "@" + currentProfile.username;
+    updateDoc(doc(db, "users", user.uid), { lastSeen: serverTimestamp() }).catch(()=>{});
+    $("login-screen").classList.remove("show");
+    subscribeChatRoster();
+  } catch(e) {
+    $("login-screen").classList.add("show");
+  }
+  hideBoot();
+});
+
+/* SEARCH MODAL (Query new users) */
+function openSearchModal() {
+  $("search-modal").classList.add("open");
+  const input = $("modal-search-input");
+  input.value = "";
+  $("modal-search-results").innerHTML = `<div style="text-align:center; color:var(--txt-subtle); padding:24px 0; font-size:13px;">Search by username to connect</div>`;
+  setTimeout(() => input.focus(), 100);
+}
+$("btn-close-search-modal").addEventListener("click", () => {
+  $("search-modal").classList.remove("open");
+  setActiveNavTab("home");
+});
+$("search-modal").addEventListener("click", (e) => {
+  if (e.target === $("search-modal")) {
+    $("search-modal").classList.remove("open");
+    setActiveNavTab("home");
+  }
+});
+let modalSearchDebounce = null;
+$("modal-search-input").addEventListener("input", (e) => {
+  clearTimeout(modalSearchDebounce);
+  const q = e.target.value.trim().toLowerCase().replace(/^@/, "");
+  if (q.length < 2) {
+    $("modal-search-results").innerHTML = `<div style="text-align:center; color:var(--txt-subtle); padding:24px 0; font-size:13px;">Search by username to connect</div>`;
+    return;
+  }
+  modalSearchDebounce = setTimeout(() => performUserSearch(q), 350);
+});
+
+async function performUserSearch(searchQ) {
+  if (!currentUser || !currentProfile) return;
+  if (searchQ === currentProfile.username.toLowerCase()) {
+    $("modal-search-results").innerHTML = `<div style="color:var(--danger); font-size:13px; padding:12px 0; text-align:center;">Cannot message yourself</div>`;
+    return;
+  }
+  try {
+    let otherUid = null, otherData = null;
+    const uDoc = await getDoc(doc(db, "usernames", searchQ));
+    if (uDoc.exists()) {
+      otherUid = uDoc.data().uid;
+      const uSnap = await getDoc(doc(db, "users", otherUid));
+      if (uSnap.exists()) otherData = uSnap.data();
+    } else {
+      const qU = query(collection(db, "users"), where("username", "==", searchQ), limit(1));
+      const uSnap = await getDocs(qU);
+      if (!uSnap.empty) { otherUid = uSnap.docs[0].id; otherData = uSnap.docs[0].data(); }
+    }
+    if (!otherUid || !otherData) {
+      $("modal-search-results").innerHTML = `<div style="color:var(--danger); font-size:13px; padding:12px 0; text-align:center;">No user found: @${escapeHtml(searchQ)}</div>`;
+      return;
+    }
+    removeDeleted(currentUser.uid, otherUid);
+    $("modal-search-results").innerHTML = `
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <div style="font-weight:600; font-size:15px; color:#ffffff;">${escapeHtml(otherData.display || otherData.username)}</div>
+          <div style="font-size:12px; font-family:var(--font-mono); color:var(--txt-muted);">@${escapeHtml(otherData.username)}</div>
+        </div>
+        <button id="btn-modal-open-peer" class="btn-pill-copy" style="padding:6px 14px; font-weight:700;">OPEN</button>
+      </div>
+    `;
+    $("btn-modal-open-peer").onclick = () => {
+      $("search-modal").classList.remove("open");
+      setActiveNavTab("home");
+      openChatWith(otherUid, otherData);
+    };
+  } catch(e) {
+    $("modal-search-results").innerHTML = `<div style="color:var(--danger); font-size:13px; text-align:center;">Search error</div>`;
+  }
+}
+
+/* Home Real-time Search */
+$("home-search-input").addEventListener("input", (e) => {
+  searchQuery = e.target.value.trim().toLowerCase();
+  renderRoster();
+});
+
+/* ROSTER / CHATS SUBSCRIPTION */
+function subscribeChatRoster() {
+  if (unsubChatRoster) { try { unsubChatRoster(); } catch(e){} unsubChatRoster = null; }
+  if (!currentUser) return;
+  const ref = collection(db, "chats");
+  const q = query(ref, where("users", "array-contains", currentUser.uid));
+  unsubChatRoster = onSnapshot(q, async (snap) => {
+    const list = [];
+    for (const d of snap.docs) {
+      const data = d.data();
+      const otherUid = data.users?.find(u => u !== currentUser.uid);
+      if (!otherUid || otherUid === YUKI_BOT_UID) continue;
+      if (isDeleted(currentUser.uid, otherUid)) continue;
+      list.push({ chatId: d.id, data, otherUid });
+    }
+    const hydrated = await Promise.all(list.map(async item => {
+      try {
+        const u = await getDoc(doc(db, "users", item.otherUid));
+        item.profile = u.exists() ? u.data() : { username: "operative", display: "Operative" };
+      } catch(e) {
+        item.profile = { username: "operative", display: "Operative" };
+      }
+      return item;
+    }));
+    hydrated.sort((a, b) => {
+      const getMs = (it) => {
+        const ts = it.data.lastMsgAt || it.data.touchAt;
+        if (ts?.toMillis) return ts.toMillis();
+        if (typeof ts === "number") return ts;
+        return 0;
+      };
+      return getMs(b) - getMs(a);
+    });
+    localChannels = hydrated;
+    $("settings-peer-count").textContent = "SYS " + (hydrated.length + 1);
+    renderRoster();
+    checkForNewMessagePopup();
+  });
+}
+
+function renderRoster() {
+  const listEl = $("home-chat-list");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  // Yuki AI Pinned Entry (matches search or defaults)
+  const yukiMatches = !searchQuery || "yuki ai companion".includes(searchQuery);
+  if (yukiMatches) {
+    const yukiItem = document.createElement("li");
+    const isYukiActive = activePeer?.isYuki && activeChatId;
+    yukiItem.className = "chat-item" + (isYukiActive ? " active" : "");
+    yukiItem.innerHTML = `
+      <div class="chat-item-main">
+        <div class="chat-item-top">
+          <span class="chat-item-name yuki-name">YUKI [AI COMPANION]</span>
+          <span class="chat-item-time" style="color:var(--yuki-cyan);">PINNED</span>
+        </div>
+        <div class="chat-item-bottom">
+          <span class="chat-item-preview">Neural interactive intelligence channel</span>
+        </div>
+      </div>
+    `;
+    yukiItem.addEventListener("click", () => {
+      playSfx('click');
+      openYukiBot();
+    });
+    listEl.appendChild(yukiItem);
+  }
+
+  // Filter channels based on partner's name only
+  const filtered = localChannels.filter(c => {
+    if (!searchQuery) return true;
+    const name = (c.profile?.display || c.profile?.username || "").toLowerCase();
+    return name.includes(searchQuery);
+  });
+
+  if (filtered.length === 0 && !yukiMatches) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = `
+      <div class="empty-state-title">No conversations found</div>
+      <div class="empty-state-sub">Try another search query</div>
+    `;
+    listEl.appendChild(empty);
+    return;
+  }
+
+  for (const item of filtered) {
+    const p = item.profile || {}, d = item.data || {};
+    const unread = (d.unread && d.unread[currentUser.uid]) || 0;
+    const isActive = activeChatId === item.chatId;
+    const displayName = p.display || p.username || "Operator";
+    const lastTime = formatTime(d.lastMsgAt || d.touchAt);
+    const preview = d.lastMsg || "channel initialized";
+
+    const li = document.createElement("li");
+    li.className = "chat-item" + (isActive ? " active" : "");
+    li.dataset.uid = item.otherUid;
+    li.innerHTML = `
+      <div class="chat-item-main">
+        <div class="chat-item-top">
+          <span class="chat-item-name">${escapeHtml(displayName)}</span>
+          <span class="chat-item-time">${escapeHtml(lastTime)}</span>
+        </div>
+        <div class="chat-item-bottom">
+          <span class="chat-item-preview">${escapeHtml(preview)}</span>
+          ${unread > 0 ? `<span class="unread-badge">${unread > 9 ? "9+" : unread}</span>` : ""}
+        </div>
+      </div>
+      <button class="chat-item-menu" title="Chat options">⋮</button>
+    `;
+
+    li.addEventListener("click", (e) => {
+      if (e.target.classList.contains("chat-item-menu")) return;
+      playSfx('click');
+      openChatWith(item.otherUid, p);
+    });
+
+    li.querySelector(".chat-item-menu").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openConfirmModal({
+        title: "DELETE CONVERSATION",
+        text: `Delete chat with ${displayName}?`,
+        sub: "This will remove the channel from your list.",
+        okText: "DELETE"
+      }, (ok) => {
+        if (!ok) return;
+        addDeleted(currentUser.uid, item.otherUid);
+        if (activePeer?.uid === item.otherUid) {
+          activePeer = null; activeChatId = null;
+          navigateToScreen("home");
+        }
+        localChannels = localChannels.filter(x => x.otherUid !== item.otherUid);
+        renderRoster();
+      });
+    });
+
+    listEl.appendChild(li);
+  }
+}
+
+/* CHAT CONVERSATION LOGIC */
+function clearChatMessagesOnly() {
+  const stream = $("chat-stream");
+  if (!stream) return;
+  stream.querySelectorAll(".msg-row, .empty-chat-state").forEach(el => el.remove());
+}
+function resetFlickerStateForChat(chatId) {
+  renderedChatId = chatId;
+  renderedMsgIds = new Set();
+  renderedHasIntro = false;
+}
+
+function openYukiBot() {
+  if (!currentUser) return;
+  if (unsubMessages) { try { unsubMessages(); } catch(e){} unsubMessages = null; }
+  if (unsubPeerStatus) { try { unsubPeerStatus(); } catch(e){} unsubPeerStatus = null; }
+
+  clearChatMessagesOnly();
+  activePeer = { uid: YUKI_BOT_UID, username: "yuki_ai", display: "YUKI [AI COMPANION]", isYuki: true };
+  activeChatId = computeChatId(currentUser.uid, YUKI_BOT_UID);
+
+  resetFlickerStateForChat(activeChatId);
+
+  $("chat-peer-name").textContent = "YUKI [AI COMPANION]";
+  $("chat-peer-status").textContent = "secure neural websocket";
+  $("chat-textarea").value = "";
+  updateWordCounter();
+
+  navigateToScreen("conversation");
+  subscribeMessages(activeChatId);
+  renderRoster();
+}
+
+function openChatWith(peerUid, peerProfile) {
+  if (!currentUser || !peerUid) return;
+  if (unsubMessages) { try { unsubMessages(); } catch(e){} unsubMessages = null; }
+  if (unsubPeerStatus) { try { unsubPeerStatus(); } catch(e){} unsubPeerStatus = null; }
+
+  clearChatMessagesOnly();
+  removeDeleted(currentUser.uid, peerUid);
+
+  let cachedProfile = peerProfile;
+  if (!cachedProfile) {
+    const found = localChannels.find(c => c.otherUid === peerUid);
+    if (found && found.profile) cachedProfile = found.profile;
+  }
+
+  activePeer = {
+    uid: peerUid,
+    username: cachedProfile?.username || "operator",
+    display: cachedProfile?.display || cachedProfile?.username || "Operator"
+  };
+  activeChatId = computeChatId(currentUser.uid, peerUid);
+
+  resetFlickerStateForChat(activeChatId);
+
+  $("chat-peer-name").textContent = activePeer.display;
+  $("chat-peer-status").textContent = "@" + activePeer.username;
+  $("chat-textarea").value = "";
+  updateWordCounter();
+
+  navigateToScreen("conversation");
+  subscribeMessages(activeChatId);
+  subscribePeerStatus(activeChatId, peerUid);
+  markSeen(activeChatId);
+  renderRoster();
+
+  const chatRef = doc(db, "chats", activeChatId);
+  setDoc(chatRef, {
+    users: [currentUser.uid, peerUid],
+    [`participants.${currentUser.uid}`]: true,
+    [`participants.${peerUid}`]: true,
+    touchAt: serverTimestamp()
+  }, { merge: true }).catch(()=>{});
+}
+
+// 3-dot menu in chat conversation header
+$("btn-chat-menu").addEventListener("click", () => {
+  if (!activePeer || activePeer.isYuki) return;
+  openConfirmModal({
+    title: "CONVERSATION OPTIONS",
+    text: `Delete conversation with ${activePeer.display}?`,
+    sub: "All local cached messages will be cleared.",
+    okText: "DELETE"
+  }, (ok) => {
+    if (!ok) return;
+    addDeleted(currentUser.uid, activePeer.uid);
+    navigateToScreen("home");
+    activePeer = null; activeChatId = null;
+    localChannels = localChannels.filter(x => x.otherUid !== activePeer?.uid);
+    renderRoster();
+  });
+});
+
+function formatMessageContent(raw) {
+  let text = String(raw ?? "").replace(/[&<>"']/g, c => (
+    {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]
+  ));
+  text = text.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+    const l = lang ? lang.toUpperCase() : 'CODE';
+    return `<div class="code-container">
+      <div class="code-head"><span>${l}</span><button class="copy-code-btn" onclick="navigator.clipboard.writeText(this.closest('.code-container').querySelector('.code-body').innerText); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY',1500);">COPY</button></div>
+      <pre class="code-body">${code.trim()}</pre>
+    </div>`;
+  });
+  text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(77,171,255,0.15);color:var(--primary);padding:1px 4px;border-radius:4px;font-family:var(--font-mono);font-size:12px;">$1</code>');
+  return text.replace(/\n/g, '<br/>');
+}
+
+function buildMessageRow(d) {
+  const m = d.data();
+  const isMine = m.by === currentUser.uid;
+  const row = document.createElement("div");
+  row.className = `msg-row ${isMine ? "me" : "peer"}`;
+  row.dataset.id = d.id;
+
+  let receipt = "";
+  if (isMine) {
+    receipt = m.seen === true
+      ? `<span class="receipt-mark seen">**</span>`
+      : `<span class="receipt-mark">*</span>`;
+  }
+
+  row.innerHTML = `
+    <div class="msg-bubble">${formatMessageContent(m.text || "")}</div>
+    <div class="msg-meta">
+      <span>${formatClock(m.at)}</span>
+      ${receipt}
+    </div>
+  `;
+  return row;
+}
+
+function subscribeMessages(chatId) {
+  if (unsubMessages) { try { unsubMessages(); } catch(e){} unsubMessages = null; }
+  const currentActiveChatId = chatId;
+  const ref = collection(db, "chats", chatId, "messages");
+  const q = query(ref, orderBy("at", "asc"), limit(300));
+
+  unsubMessages = onSnapshot(q, (snap) => {
+    if (activeChatId !== currentActiveChatId) return;
+    const streamEl = $("chat-stream");
+    if (!streamEl) return;
+
+    if (renderedChatId !== currentActiveChatId) {
+      clearChatMessagesOnly();
+      resetFlickerStateForChat(currentActiveChatId);
+    }
+    const wasAtBottom = streamEl.scrollHeight - streamEl.scrollTop - streamEl.clientHeight < 150;
+
+    if (snap.empty) {
+      if (!renderedHasIntro) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.dataset.intro = "1";
+        empty.innerHTML = `
+          <div class="empty-state-title">Secure channel initialized</div>
+          <div class="empty-state-sub">Send a message to begin conversation</div>
+        `;
+        streamEl.appendChild(empty);
+        renderedHasIntro = true;
+      }
+      return;
+    }
+
+    if (renderedHasIntro) {
+      streamEl.querySelectorAll('[data-intro="1"]').forEach(el => el.remove());
+      renderedHasIntro = false;
+    }
+
+    const fragment = document.createDocumentFragment();
+    let appended = 0;
+
+    snap.forEach(d => {
+      const existing = streamEl.querySelector(`.msg-row[data-id="${CSS.escape(d.id)}"]`);
+      if (!existing) {
+        fragment.appendChild(buildMessageRow(d));
+        renderedMsgIds.add(d.id);
+        appended++;
+      } else {
+        const m = d.data();
+        if (m.by === currentUser.uid) {
+          const receiptEl = existing.querySelector(".receipt-mark");
+          if (receiptEl) {
+            const shouldSeen = m.seen === true;
+            const isSeen = receiptEl.classList.contains("seen");
+            if (shouldSeen !== isSeen) {
+              receiptEl.classList.toggle("seen", shouldSeen);
+              receiptEl.textContent = shouldSeen ? "**" : "*";
+            }
+          }
+        }
+      }
+    });
+
+    if (appended > 0) streamEl.appendChild(fragment);
+    if (wasAtBottom) streamEl.scrollTop = streamEl.scrollHeight;
+    markSeen(chatId);
+  });
+}
+
+function subscribePeerStatus(chatId, otherUid) {
+  if (unsubPeerStatus) { try { unsubPeerStatus(); } catch(e){} unsubPeerStatus = null; }
+  if (otherUid === YUKI_BOT_UID) return;
+  const currentActiveChatId = chatId;
+  unsubPeerStatus = onSnapshot(doc(db, "chats", chatId), async (snap) => {
+    if (activeChatId !== currentActiveChatId || !snap.exists()) return;
+    const d = snap.data();
+    const statusEl = $("chat-peer-status");
+    if (d.typing && d.typing[otherUid] === true) {
+      statusEl.textContent = "typing...";
+      return;
+    }
+    const found = localChannels.find(c => c.otherUid === otherUid);
+    if (found && found.profile && found.profile.username) {
+      const ud = found.profile;
+      statusEl.textContent = ud.lastSeen ? `@${ud.username} · last active ${formatTime(ud.lastSeen)}` : "@" + ud.username;
+      return;
+    }
+    try {
+      const u = await getDoc(doc(db, "users", otherUid));
+      if (u.exists() && activeChatId === currentActiveChatId) {
+        const ud = u.data();
+        statusEl.textContent = ud.lastSeen ? `@${ud.username} · last active ${formatTime(ud.lastSeen)}` : "@" + ud.username;
+      }
+    } catch(e){}
+  });
+}
+
+async function markSeen(chatId) {
+  if (!chatId || !currentUser || activePeer?.isYuki) return;
+  try {
+    updateDoc(doc(db, "chats", chatId), { [`unread.${currentUser.uid}`]: 0 }).catch(()=>{});
+    const qU = query(collection(db, "chats", chatId, "messages"), where("by", "!=", currentUser.uid), where("seen", "==", false), limit(50));
+    const snap = await getDocs(qU);
+    snap.forEach(d => { updateDoc(d.ref, { seen: true }).catch(()=>{}); });
+  } catch(e){}
+}
+
+/* Transmit Message */
+async function transmitMessage() {
+  const ta = $("chat-textarea");
+  const text = ta.value.trim();
+  if (!text || !currentUser || !activeChatId || !activePeer) return;
+  ta.value = "";
+  ta.style.height = "auto";
+  updateWordCounter();
+  ta.focus();
+
+  const payload = { text, by: currentUser.uid, at: serverTimestamp(), seen: false };
+  try {
+    await addDoc(collection(db, "chats", activeChatId, "messages"), payload);
+    await setDoc(doc(db, "chats", activeChatId), {
+      users: [currentUser.uid, activePeer.uid],
+      [`participants.${currentUser.uid}`]: true,
+      [`participants.${activePeer.uid}`]: true,
+      lastMsg: text.slice(0, 80),
+      lastMsgAt: serverTimestamp(),
+      lastMsgBy: currentUser.uid,
+      touchAt: serverTimestamp(),
+      unread: activePeer.isYuki ? {} : { [activePeer.uid]: increment(1), [currentUser.uid]: 0 },
+      typing: { [currentUser.uid]: false }
+    }, { merge: true });
+    playSfx('send');
+
+    if (activePeer.isYuki) {
+      setTimeout(async () => {
+        try {
+          let reply = "…";
+          try {
+            const r = await fetch("/api/yuki", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: text, history: yukiChatHistory })
+            });
+            if (r.ok) {
+              const data = await r.json();
+              reply = data.reply || data.response || data.message || data.text || data.result || "…";
+              if (typeof reply !== "string") reply = JSON.stringify(reply);
+            } else {
+              reply = "Neural link timeout. Retry transmission.";
+            }
+          } catch(fetchErr) {
+            reply = "Neural link timeout. Retry transmission.";
+          }
+          yukiChatHistory.push({ role: "user", content: text });
+          yukiChatHistory.push({ role: "assistant", content: reply });
+          yukiChatHistory = yukiChatHistory.slice(-20);
+
+          await addDoc(collection(db, "chats", activeChatId, "messages"), {
+            text: reply, by: YUKI_BOT_UID, at: serverTimestamp(), seen: true
+          });
+          await setDoc(doc(db, "chats", activeChatId), {
+            lastMsg: reply.slice(0, 80),
+            lastMsgAt: serverTimestamp(),
+            lastMsgBy: YUKI_BOT_UID,
+            touchAt: serverTimestamp()
+          }, { merge: true });
+          playSfx('receive');
+        } catch(e){}
+      }, 650);
+    }
+  } catch(e) {
+    showToast("TRANSMISSION ERROR");
+  }
+}
+
+$("chat-form").addEventListener("submit", e => { e.preventDefault(); transmitMessage(); });
+$("chat-textarea").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); transmitMessage(); }
+});
+
+function countWords(str) {
+  const m = str.trim().match(/\S+/g);
+  return m ? m.length : 0;
+}
+function updateWordCounter() {
+  const ta = $("chat-textarea");
+  const words = countWords(ta.value);
+  const el = $("word-counter-display");
+  el.textContent = `${words.toLocaleString()} / 5,000 words`;
+  $("btn-send").disabled = words > 5000;
+}
+$("chat-textarea").addEventListener("input", e => {
+  e.target.style.height = "auto";
+  e.target.style.height = Math.min(e.target.scrollHeight, 110) + "px";
+  updateWordCounter();
+  broadcastTyping();
+});
+
+async function broadcastTyping() {
+  if (!currentUser || !activeChatId || activePeer?.isYuki) return;
+  const now = Date.now();
+  if (now - lastTypingTime < 2500) return;
+  lastTypingTime = now;
+  try {
+    await updateDoc(doc(db, "chats", activeChatId), { [`typing.${currentUser.uid}`]: true });
+    if (typingBeaconTimer) clearTimeout(typingBeaconTimer);
+    typingBeaconTimer = setTimeout(async () => {
+      try { await updateDoc(doc(db, "chats", activeChatId), { [`typing.${currentUser.uid}`]: false }); } catch(e){}
+    }, 3000);
+  } catch(e){}
+}
+
+/* Incoming message banner notification */
+let lastBannerTime = 0;
+function checkForNewMessagePopup() {
+  const me = currentUser?.uid;
+  if (!me) return;
+  for (const c of localChannels) {
+    const unread = (c.data?.unread && c.data.unread[me]) || 0;
+    if (unread > 0 && activePeer?.uid !== c.otherUid) {
+      if (Date.now() - lastBannerTime < 3000) return;
+      lastBannerTime = Date.now();
+      showTopBanner(c.profile?.username || "operator", c.data.lastMsg || "new message", c.otherUid, c.profile);
+      return;
+    }
+  }
+}
+let bannerTimer = null;
 function showTopBanner(handle, preview, peerUid, profile) {
   const b = $("incoming-banner");
   $("banner-sender").textContent = "@" + handle;
   $("banner-preview").textContent = preview;
   b.classList.add("visible");
-  b.onclick = () => { b.classList.remove("visible"); openChatWith(peerUid, profile); };
+  b.onclick = () => {
+    b.classList.remove("visible");
+    openChatWith(peerUid, profile);
+  };
   if (bannerTimer) clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => b.classList.remove("visible"), 5000);
+  bannerTimer = setTimeout(() => b.classList.remove("visible"), 4500);
 }
 </script>
 </body>
