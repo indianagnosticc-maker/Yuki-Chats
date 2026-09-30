@@ -24,10 +24,11 @@ html,body{height:100%;background:#000;color:var(--text);font-family:Inter,system
 button,input{font:inherit}
 button{cursor:pointer}
 body{overflow:hidden}
-.app{height:100dvh;display:flex;background:
+.app{width:100%;height:100dvh;min-height:0;display:flex;overflow:hidden;background:
  radial-gradient(900px 500px at 50% -20%,rgba(255,255,255,.045),transparent 65%),
  #000}
 .sidebar{
+ min-height:0;
  width:330px;min-width:330px;border-right:1px solid var(--line);
  display:flex;flex-direction:column;background:rgba(4,4,4,.82);
  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
@@ -76,7 +77,7 @@ body{overflow:hidden}
 .chat-time{font-size:9px;color:var(--dim);flex:none}
 .preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .empty{padding:45px 20px;text-align:center;color:var(--dim);font-size:11px;line-height:1.7}
-.main{min-width:0;flex:1;display:flex;flex-direction:column;position:relative}
+.main{min-width:0;min-height:0;flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden}
 .chat-head{
  height:70px;min-height:70px;border-bottom:1px solid var(--line);
  display:flex;align-items:center;padding:0 22px;gap:11px;
@@ -88,7 +89,7 @@ body{overflow:hidden}
 .head-name{font-size:13px;font-weight:650}
 .head-status{font-size:10px;color:var(--muted);margin-top:3px}
 .messages{
- flex:1;overflow:auto;padding:28px clamp(16px,5vw,72px) 22px;
+ flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:28px clamp(16px,5vw,72px) 22px;
  display:flex;flex-direction:column;gap:7px;scroll-behavior:smooth
 }
 .day{text-align:center;font-size:9px;color:var(--dim);letter-spacing:1.3px;margin:5px 0 13px}
@@ -103,7 +104,7 @@ body{overflow:hidden}
 .theirs .bubble{border-bottom-left-radius:5px}
 .meta{font-size:8.5px;color:var(--dim);margin:4px 5px 0}
 .mine .meta{text-align:right}
-.composer-wrap{padding:10px clamp(12px,4vw,60px) calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000 25%)}
+.composer-wrap{flex:none;padding:8px clamp(12px,4vw,60px) calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000 25%)}
 .composer{
  min-height:50px;display:flex;align-items:flex-end;gap:7px;padding:6px;
  border:1px solid var(--line2);border-radius:15px;background:#080808;
@@ -150,16 +151,26 @@ body{overflow:hidden}
 .open-chat{background:#fff;color:#000;border:0;border-radius:8px;padding:8px 10px;font-size:10px;font-weight:650}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:720px){
- .sidebar{width:100%;min-width:0;border-right:0}
- .main{display:none}
+ .sidebar{width:100%;min-width:0;min-height:0;border-right:0}
+ .main{display:none;min-height:0;height:100dvh}
  .app.chat-open .sidebar{display:none}
  .app.chat-open .main{display:flex}
  .back{display:grid}
- .side-head{padding-top:max(16px,env(safe-area-inset-top))}
- .chat-head{padding:0 13px}
- .messages{padding-left:14px;padding-right:14px}
- .msg-row{max-width:84%}
+ .side-head{padding-top:max(12px,env(safe-area-inset-top));padding-left:12px;padding-right:12px}
+ .chat-head{height:64px;min-height:64px;padding:0 12px}
+ .messages{padding:18px 12px 12px}
+ .msg-row{max-width:86%}
+ .bubble{font-size:13px;padding:9px 12px}
+ .composer-wrap{padding:7px 10px calc(7px + env(safe-area-inset-bottom))}
+ .composer{min-height:48px;border-radius:14px}
+ .composer textarea{font-size:13px;min-height:34px;padding:8px}
+ .send{width:38px;height:38px;border-radius:11px}
  .overlay{display:block}
+ .find-card{
+   top:auto;bottom:calc(10px + env(safe-area-inset-bottom));
+   max-height:calc(100dvh - 24px);overflow:auto;
+   border-radius:18px;
+ }
 }
 @media(min-width:721px){.find{display:block}}
 
@@ -229,7 +240,7 @@ body{overflow:hidden}
           <div class="logo">Y</div>
           <div><div class="brand-name" id="brand-name">Yuki</div><div class="brand-sub">CHATS</div></div>
         </div>
-        <button class="icon" id="logoutBtn" aria-label="Log out" title="Log out">↪</button><button class="icon" id="newChat" aria-label="New chat">
+        <button class="icon" id="logoutBtn" aria-label="Log out" title="Log out">↪</button><button class="icon" id="newChat" aria-label="New chat" title="New chat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
@@ -267,7 +278,7 @@ body{overflow:hidden}
       <div class="find-title">Start a new chat</div>
       <div class="find-sub">Search a user by their ID and open a conversation.</div>
       <div class="find-row">
-        <input id="idInput" placeholder="Enter user ID">
+        <input id="idInput" placeholder="Enter @username or user ID" autocomplete="off" autocapitalize="none" spellcheck="false">
         <button id="findBtn">Search</button>
       </div>
       <div class="find-result" id="findResult">
@@ -516,52 +527,175 @@ async function askYuki(text){
   },{merge:true});
 }
 
-async function searchUser(){
-  const raw=$("chatSearch").value.trim().toLowerCase().replace(/^@/,"");
-  if(!raw||!currentUser)return;
+async function findUser(rawValue){
+  const raw=String(rawValue||"").trim().toLowerCase().replace(/^@/,"");
+  if(!raw||!currentUser)return null;
+
   try{
     let uid=null,p=null;
+
+    // First: username index (fast path).
     const uname=await getDoc(doc(db,"usernames",raw));
     if(uname.exists()){
       uid=uname.data().uid;
-      const u=await getDoc(doc(db,"users",uid));if(u.exists())p=u.data();
-    }else{
-      const q=query(collection(db,"users"),where("username","==",raw),limit(1));
-      const s=await getDocs(q);
-      if(!s.empty){uid=s.docs[0].id;p=s.docs[0].data();}
+      const u=await getDoc(doc(db,"users",uid));
+      if(u.exists())p=u.data();
     }
-    if(!uid||!p){alert("User not found: @"+raw);return;}
-    if(uid===currentUser.uid){alert("You cannot chat with yourself.");return;}
-    if(!chats.some(x=>x.uid===uid))chats.unshift({uid,...p,lastMsg:"Start a conversation"});
-    openUser(uid,p);renderRoster();
-  }catch(e){console.error(e);alert("Search failed.");}
+
+    // Second: exact username query.
+    if(!uid){
+      const uq=query(collection(db,"users"),where("username","==",raw),limit(1));
+      const us=await getDocs(uq);
+      if(!us.empty){
+        uid=us.docs[0].id;
+        p=us.docs[0].data();
+      }
+    }
+
+    // Third: allow a Firebase UID to be pasted as the user ID.
+    if(!uid){
+      const u=await getDoc(doc(db,"users",raw));
+      if(u.exists()){
+        uid=raw;
+        p=u.data();
+      }
+    }
+
+    if(!uid||!p) return null;
+    return {uid,...p};
+  }catch(e){
+    console.error("user search",e);
+    throw e;
+  }
+}
+
+async function searchUser(rawValue){
+  const raw=String(rawValue||"").trim();
+  if(!raw||!currentUser)return;
+
+  try{
+    const result=await findUser(raw);
+    if(!result){
+      alert("User not found. Try @username or the user's ID.");
+      return null;
+    }
+    if(result.uid===currentUser.uid){
+      alert("You cannot chat with yourself.");
+      return null;
+    }
+
+    if(!chats.some(x=>x.uid===result.uid)){
+      chats.unshift({uid:result.uid,...result,lastMsg:"Start a conversation"});
+    }
+    openUser(result.uid,result);
+    renderRoster();
+    return result;
+  }catch(e){
+    alert("Search failed. Please try again.");
+    return null;
+  }
+}
+
+function filterChats(){
+  const q=$("chatSearch").value.trim().toLowerCase().replace(/^@/,"");
+  document.querySelectorAll("#chatList .chat").forEach((r,i)=>{
+    if(i===0)return;
+    r.style.display=!q || r.innerText.toLowerCase().includes(q)?"flex":"none";
+  });
+
+  // If the query is not an existing chat, show a direct "search user" row.
+  const old=$("quickUserSearch");
+  if(old) old.remove();
+  if(q){
+    const exists=chats.some(x=>
+      String(x.username||"").toLowerCase()===q ||
+      String(x.display||"").toLowerCase().includes(q)
+    );
+    if(!exists){
+      const row=document.createElement("div");
+      row.id="quickUserSearch";
+      row.className="chat";
+      row.innerHTML=`<div class="avatar">+</div>
+        <div class="chat-info">
+          <div class="chat-name">Search @${esc(q)}</div>
+          <div class="preview">Find and start a new chat</div>
+        </div>`;
+      row.onclick=()=>searchUser(q);
+      chatList.appendChild(row);
+    }
+  }
 }
 
 $("chatSearch").addEventListener("keydown",e=>{
-  if(e.key==="Enter"){e.preventDefault();searchUser();}
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const q=$("chatSearch").value.trim();
+    if(q) searchUser(q);
+  }
 });
-$("chatSearch").addEventListener("input",()=>{
-  const q=$("chatSearch").value.toLowerCase().replace(/^@/,"");
-  document.querySelectorAll("#chatList .chat").forEach((r,i)=>{
-    if(i===0)return;
-    r.style.display=r.innerText.toLowerCase().includes(q)?"flex":"none";
-  });
-});
+$("chatSearch").addEventListener("input",filterChats);
 $("composer").onsubmit=e=>{e.preventDefault();sendMessage();};
 $("messageInput").addEventListener("keydown",e=>{
   if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}
 });
 $("messageInput").addEventListener("input",e=>{
-  e.target.style.height="36px";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";
+  e.target.style.height="36px";e.target.style.height=Math.min(e.target.scrollHeight,110)+"px";
 });
-$("backBtn").onclick=()=>$("app").classList.remove("chat-open");
+$("backBtn").onclick=()=>{$("app").classList.remove("chat-open");setTimeout(()=>{$("chatSearch").focus();},80);};
 
 $("logoutBtn").onclick=async()=>{await signOut(auth);};
 $("newChat").onclick=()=>{
-  $("chatSearch").focus();
-  $("chatSearch").placeholder="Enter @username and press Enter";
+  $("find").classList.add("open");
+  $("idInput").value="";
+  $("findResult").classList.remove("show");
+  $("idInput").focus();
 };
-$("brand-name").id="brand-name";
+
+$("findBtn").onclick=async()=>{
+  const raw=$("idInput").value.trim();
+  if(!raw)return;
+  const btn=$("findBtn");
+  btn.disabled=true;
+  btn.textContent="Searching…";
+  try{
+    const result=await findUser(raw);
+    if(!result){
+      $("findResult").classList.remove("show");
+      alert("User not found. Try @username or the user's ID.");
+      return;
+    }
+    if(result.uid===currentUser.uid){
+      $("findResult").classList.remove("show");
+      alert("You cannot chat with yourself.");
+      return;
+    }
+    $("resultAvatar").textContent=(profileName(result)[0]||"U").toUpperCase();
+    $("resultName").textContent=profileName(result);
+    $("resultId").textContent="@"+(result.username||result.uid);
+    $("findResult").classList.add("show");
+    $("openFound").onclick=()=>{
+      if(!chats.some(x=>x.uid===result.uid)){
+        chats.unshift({uid:result.uid,...result,lastMsg:"Start a conversation"});
+      }
+      $("find").classList.remove("open");
+      openUser(result.uid,result);
+      renderRoster();
+    };
+  }catch(e){
+    alert("Search failed. Please try again.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Search";
+  }
+};
+
+$("idInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){e.preventDefault();$("findBtn").click();}
+});
+
+$("find").addEventListener("click",e=>{
+  if(e.target===$("find")) $("find").classList.remove("open");
+});
 
 async function subscribeRoster(){
   if(unsubRoster)unsubRoster();
