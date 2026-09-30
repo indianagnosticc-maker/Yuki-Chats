@@ -1608,7 +1608,13 @@ pre.code-body{color:#d9def0!important;font-family:"SFMono-Regular",Consolas,mono
   .msg-textarea{min-height:40px!important;font-size:13px!important}
   .send-btn{min-width:64px!important;padding:0 11px!important}
 }
+/* ROSTER TOGGLE FIX: JS uses .sidebar-hidden; keep that state authoritative. */
+.sidebar.sidebar-hidden{transform:translateX(-102%)!important;}
+@media (max-width:768px){
+  .sidebar:not(.sidebar-hidden){transform:translateX(0)!important;}
+}
 @media (min-width:769px){
+  .sidebar{transform:none!important;}
   .btn-toggle-roster{display:none!important}
 }
 </style>
